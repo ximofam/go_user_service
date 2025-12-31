@@ -19,9 +19,8 @@ func NewUserHandler(authService service.AuthService) *AuthHandler {
 }
 
 func (h *AuthHandler) Login(c *gin.Context) {
-	var input dto.UserLoginInput
-	if err := c.ShouldBindJSON(&input); err != nil {
-		response.Error(c, utils.ErrBadRequest("Invalid request data", err))
+	input, ok := bindJSON[dto.UserLoginInput](c)
+	if !ok {
 		return
 	}
 
@@ -35,9 +34,8 @@ func (h *AuthHandler) Login(c *gin.Context) {
 }
 
 func (h *AuthHandler) Register(c *gin.Context) {
-	var input dto.UserResgisterInput
-	if err := c.ShouldBindJSON(&input); err != nil {
-		response.Error(c, utils.ErrBadRequest("Invalid request data", err))
+	input, ok := bindJSON[dto.UserResgisterInput](c)
+	if !ok {
 		return
 	}
 
@@ -50,9 +48,8 @@ func (h *AuthHandler) Register(c *gin.Context) {
 }
 
 func (h *AuthHandler) ChangePassword(c *gin.Context) {
-	var input dto.UserChangePasswordInput
-	if err := c.ShouldBindJSON(&input); err != nil {
-		response.Error(c, utils.ErrBadRequest("Invalid request data", err))
+	input, ok := bindJSON[dto.UserChangePasswordInput](c)
+	if !ok {
 		return
 	}
 
@@ -67,9 +64,8 @@ func (h *AuthHandler) ChangePassword(c *gin.Context) {
 }
 
 func (h *AuthHandler) RefreshToken(c *gin.Context) {
-	var input dto.UserRefreshTokenInput
-	if err := c.ShouldBindJSON(&input); err != nil {
-		response.Error(c, utils.ErrBadRequest("Invalid request data", err))
+	input, ok := bindJSON[dto.UserRefreshTokenInput](c)
+	if !ok {
 		return
 	}
 
@@ -83,9 +79,8 @@ func (h *AuthHandler) RefreshToken(c *gin.Context) {
 }
 
 func (h *AuthHandler) Logout(c *gin.Context) {
-	var input dto.UserLogoutInput
-	if err := c.ShouldBindJSON(&input); err != nil {
-		response.Error(c, utils.ErrBadRequest("Invalid request data", err))
+	input, ok := bindJSON[dto.UserLogoutInput](c)
+	if !ok {
 		return
 	}
 

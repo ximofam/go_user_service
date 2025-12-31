@@ -2,7 +2,6 @@ package response
 
 import (
 	"errors"
-	"log"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -12,26 +11,30 @@ import (
 type ErrorResponse struct {
 	Code    string `json:"code"`
 	Message string `json:"message"`
+	Details any    `json:"details,omitempty"`
 }
 
 func Error(c *gin.Context, err error) {
-	var appErr *utils.AppError
-
 	status := http.StatusInternalServerError
 	resp := ErrorResponse{
 		Code: utils.ErrCodeInternal,
 	}
 
+	var appErr *utils.AppError
 	if errors.As(err, &appErr) {
 		status = httpStatusFromCode(appErr.Code)
 		resp.Code = appErr.Code
 		resp.Message = appErr.Message
 
 		if appErr.Err != nil {
-			log.Println(appErr.Err)
+			if e, ok := appErr.Err.(error); ok {
+				resp.Details = e.Error()
+			} else {
+				resp.Details = appErr.Err
+			}
 		}
 	} else {
-		resp.Message = err.Error()
+		resp.Details = err.Error()
 	}
 
 	c.JSON(status, gin.H{
