@@ -35,7 +35,7 @@ func NewTokenService(accessTokenTTL, refreshTokenTTL time.Duration, secretKey []
 func (s *jwtService) GenerateAccessToken(ctx context.Context, user *model.User) (string, error) {
 	claims := MyClaims{
 		UserID:   strconv.Itoa(int(user.ID)),
-		UserRole: "",
+		UserRole: user.Role,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(s.accessTokenTTL)),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),

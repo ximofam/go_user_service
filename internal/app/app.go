@@ -46,6 +46,7 @@ func NewApp(cfg *config.Config, db *sql.DB, redisClient *redis.Client) (*App, er
 	)
 
 	routes.AuthRoutes(router, dbProvider, tokenService)
+	routes.UserRoutes(router, dbProvider, tokenService)
 
 	return &App{
 		cfg:         cfg,

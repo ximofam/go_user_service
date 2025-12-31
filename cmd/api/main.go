@@ -11,7 +11,7 @@ import (
 func main() {
 	cfg := config.Load()
 
-	db, err := datasource.NewMySQLConnection(
+	dbMySQL, err := datasource.NewMySQLConnection(
 		cfg.MySQL.DBUser,
 		cfg.MySQL.DBPassword,
 		cfg.MySQL.DBHost,
@@ -33,7 +33,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	app, err := app.NewApp(cfg, db, redisClient)
+	app, err := app.NewApp(cfg, dbMySQL, redisClient)
 	if err != nil {
 		log.Fatal(err)
 	}

@@ -10,7 +10,7 @@ import (
 )
 
 func NewMySQLConnection(user, password, host, port, dbName string) (*sql.DB, error) {
-	dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?parseTime=true&loc=Local",
+	dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?parseTime=true&loc=UTC",
 		user, password, host, port, dbName,
 	)
 

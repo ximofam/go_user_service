@@ -12,11 +12,11 @@ import (
 )
 
 type AuthService interface {
-	Login(ctx context.Context, input *dto.UserLoginInput) (*dto.UserLoginOutput, error)
-	Register(ctx context.Context, input *dto.UserResgisterInput) error
-	ChangePassword(ctx context.Context, input *dto.UserChangePasswordInput) error
-	RefreshToken(ctx context.Context, input *dto.UserRefreshTokenInput) (*dto.UserLoginOutput, error)
-	Logout(ctx context.Context, input *dto.UserLogoutInput) error
+	Login(ctx context.Context, input *dto.LoginInput) (*dto.LoginOutput, error)
+	Register(ctx context.Context, input *dto.ResgisterInput) error
+	ChangePassword(ctx context.Context, input *dto.ChangePasswordInput) error
+	RefreshToken(ctx context.Context, input *dto.RefreshTokenInput) (*dto.LoginOutput, error)
+	Logout(ctx context.Context, input *dto.LogoutInput) error
 }
 
 type authService struct {
@@ -24,14 +24,14 @@ type authService struct {
 	tokenService token.TokenService
 }
 
-func NewUserService(userRepo repository.UserRepository, tokenService token.TokenService) AuthService {
+func NewAuthService(userRepo repository.UserRepository, tokenService token.TokenService) AuthService {
 	return &authService{
 		userRepo:     userRepo,
 		tokenService: tokenService,
 	}
 }
 
-func (s *authService) Login(ctx context.Context, input *dto.UserLoginInput) (*dto.UserLoginOutput, error) {
+func (s *authService) Login(ctx context.Context, input *dto.LoginInput) (*dto.LoginOutput, error) {
 	user, err := s.userRepo.GetByEmail(ctx, input.Email)
 	if err != nil {
 		return nil, utils.ErrUnauthorized("Invalid email or password", err)
@@ -51,16 +51,21 @@ func (s *authService) Login(ctx context.Context, input *dto.UserLoginInput) (*dt
 		return nil, utils.ErrInternal("Failed to generate refresh token", err)
 	}
 
-	return &dto.UserLoginOutput{
+	return &dto.LoginOutput{
 		AccessToken:  accessToken,
 		RefreshToken: refreshToken.Token,
 	}, nil
 }
 
-func (s *authService) Register(ctx context.Context, input *dto.UserResgisterInput) error {
-	_, err := s.userRepo.GetByEmail(ctx, input.Email)
+func (s *authService) Register(ctx context.Context, input *dto.ResgisterInput) error {
+	err := s.userRepo.IsExists(ctx, "email", input.Email)
 	if err == nil {
 		return utils.ErrBadRequest(fmt.Sprintf("User already exists with email: %s", input.Email), nil)
+	}
+
+	err = s.userRepo.IsExists(ctx, "username", input.Username)
+	if err == nil {
+		return utils.ErrBadRequest(fmt.Sprintf("User already exists with username: %s", input.Username), nil)
 	}
 
 	hashPassword := utils.HashPassword(input.Password)
@@ -69,6 +74,7 @@ func (s *authService) Register(ctx context.Context, input *dto.UserResgisterInpu
 	}
 
 	user := model.User{
+		Username: input.Username,
 		Email:    input.Email,
 		Password: hashPassword,
 	}
@@ -80,7 +86,7 @@ func (s *authService) Register(ctx context.Context, input *dto.UserResgisterInpu
 	return nil
 }
 
-func (s *authService) ChangePassword(ctx context.Context, input *dto.UserChangePasswordInput) error {
+func (s *authService) ChangePassword(ctx context.Context, input *dto.ChangePasswordInput) error {
 	user, err := s.userRepo.GetByID(ctx, input.UserID)
 	if err != nil {
 		return utils.ErrUnauthorized("Missing or invalid user id", err)
@@ -102,7 +108,7 @@ func (s *authService) ChangePassword(ctx context.Context, input *dto.UserChangeP
 	return nil
 }
 
-func (s *authService) RefreshToken(ctx context.Context, input *dto.UserRefreshTokenInput) (*dto.UserLoginOutput, error) {
+func (s *authService) RefreshToken(ctx context.Context, input *dto.RefreshTokenInput) (*dto.LoginOutput, error) {
 	oldRefreshToken, err := s.tokenService.ValidateRefreshToken(ctx, input.Token)
 	if err != nil {
 		return nil, utils.ErrBadRequest(err.Error(), nil)
@@ -126,13 +132,13 @@ func (s *authService) RefreshToken(ctx context.Context, input *dto.UserRefreshTo
 		return nil, utils.ErrInternal("Failed to generate refresh token", err)
 	}
 
-	return &dto.UserLoginOutput{
+	return &dto.LoginOutput{
 		AccessToken:  accessToken,
 		RefreshToken: refreshToken.Token,
 	}, nil
 }
 
-func (s *authService) Logout(ctx context.Context, input *dto.UserLogoutInput) error {
+func (s *authService) Logout(ctx context.Context, input *dto.LogoutInput) error {
 	refreshToken, err := s.tokenService.ValidateRefreshToken(ctx, input.RefreshToken)
 	if err != nil {
 		return utils.ErrBadRequest("The user already logout", err)

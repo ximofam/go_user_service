@@ -24,3 +24,7 @@ func ContextGetTx(ctx context.Context) *sql.Tx {
 type userIDKey struct{}
 
 var UserIDKey = userIDKey{}
+
+type userRoleKey struct{}
+
+var UserRoleKey = userRoleKey{}

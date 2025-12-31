@@ -7,6 +7,10 @@ import (
 	"github.com/ximofam/user-service/internal/utils"
 )
 
+type SQLScanner interface {
+	Scan(dest ...any) error
+}
+
 type Querier interface {
 	ExecContext(ctx context.Context, query string, args ...interface{}) (sql.Result, error)
 	PrepareContext(ctx context.Context, query string) (*sql.Stmt, error)

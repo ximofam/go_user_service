@@ -37,4 +37,7 @@ migrate-drop:
 migrate-goto:
 	migrate -path $(MIGRATION_DIRS) -database "$(CONN_STRING)" goto $(VERSION)
 
-.PHONY: server migrate-create migrate-up migrate-down migrate-force migrate-drop migrate-goto migrate-down-n
+init-admin:
+	go run cmd/seed/init_admin.go -email="$(EMAIL)" -username="$(USERNAME)" -password="$(PASSWORD)"
+
+.PHONY: server migrate-create migrate-up migrate-down migrate-force migrate-drop migrate-goto migrate-down-n init-admin

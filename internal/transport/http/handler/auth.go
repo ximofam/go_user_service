@@ -14,12 +14,12 @@ type AuthHandler struct {
 	authService service.AuthService
 }
 
-func NewUserHandler(authService service.AuthService) *AuthHandler {
+func NewAuthHandler(authService service.AuthService) *AuthHandler {
 	return &AuthHandler{authService: authService}
 }
 
 func (h *AuthHandler) Login(c *gin.Context) {
-	input, ok := bindJSON[dto.UserLoginInput](c)
+	input, ok := bindJSON[dto.LoginInput](c)
 	if !ok {
 		return
 	}
@@ -34,7 +34,7 @@ func (h *AuthHandler) Login(c *gin.Context) {
 }
 
 func (h *AuthHandler) Register(c *gin.Context) {
-	input, ok := bindJSON[dto.UserResgisterInput](c)
+	input, ok := bindJSON[dto.ResgisterInput](c)
 	if !ok {
 		return
 	}
@@ -48,7 +48,7 @@ func (h *AuthHandler) Register(c *gin.Context) {
 }
 
 func (h *AuthHandler) ChangePassword(c *gin.Context) {
-	input, ok := bindJSON[dto.UserChangePasswordInput](c)
+	input, ok := bindJSON[dto.ChangePasswordInput](c)
 	if !ok {
 		return
 	}
@@ -64,7 +64,7 @@ func (h *AuthHandler) ChangePassword(c *gin.Context) {
 }
 
 func (h *AuthHandler) RefreshToken(c *gin.Context) {
-	input, ok := bindJSON[dto.UserRefreshTokenInput](c)
+	input, ok := bindJSON[dto.RefreshTokenInput](c)
 	if !ok {
 		return
 	}
@@ -79,7 +79,7 @@ func (h *AuthHandler) RefreshToken(c *gin.Context) {
 }
 
 func (h *AuthHandler) Logout(c *gin.Context) {
-	input, ok := bindJSON[dto.UserLogoutInput](c)
+	input, ok := bindJSON[dto.LogoutInput](c)
 	if !ok {
 		return
 	}

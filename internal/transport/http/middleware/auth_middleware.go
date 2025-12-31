@@ -38,6 +38,7 @@ func Auth(tokenService token.TokenService) gin.HandlerFunc {
 		}
 
 		c.Set(utils.UserIDKey, uint(userID))
+		c.Set(utils.UserRoleKey, claims.UserRole)
 
 		c.Next()
 	}

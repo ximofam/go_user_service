@@ -12,8 +12,8 @@ import (
 
 func AuthRoutes(r *gin.Engine, dbProvider *db.DBProvider, tokenService token.TokenService) {
 	userRepo := repository.NewUserRepository(dbProvider)
-	authService := service.NewUserService(userRepo, tokenService)
-	authHandler := handler.NewUserHandler(authService)
+	authService := service.NewAuthService(userRepo, tokenService)
+	authHandler := handler.NewAuthHandler(authService)
 	auth := r.Group("/auth")
 	{
 		auth.POST("/login", authHandler.Login)

@@ -30,6 +30,26 @@ func bindJSON[T any](c *gin.Context) (T, bool) {
 	return res, true
 }
 
+func bindQuery[T any](c *gin.Context) (T, bool) {
+	var res T
+	if err := c.ShouldBindQuery(&res); err != nil {
+		var vErrs validator.ValidationErrors
+		if errors.As(err, &vErrs) {
+			out := make([]string, len(vErrs))
+			for i, v := range vErrs {
+				out[i] = getValidateErrorMsg(v)
+			}
+
+			response.Error(c, utils.ErrBadRequest("Invalid request data", out))
+			return res, false
+		}
+
+		response.Error(c, utils.ErrBadRequest("Invalid JSON format", err))
+	}
+
+	return res, true
+}
+
 func getValidateErrorMsg(fe validator.FieldError) string {
 	switch fe.Tag() {
 	case "required":
