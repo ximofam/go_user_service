@@ -1,5 +1,7 @@
 package utils
 
+import "fmt"
+
 const (
 	ErrCodeBadRequest      = "BAD_REQUEST"
 	ErrCodeNotFound        = "NOT_FOUND"
@@ -17,7 +19,7 @@ type AppError struct {
 }
 
 func (a *AppError) Error() string {
-	return a.Message
+	return fmt.Sprintf("%s: %v", a.Message, a.Err)
 }
 
 func NewAppError(code, message string, err any) *AppError {

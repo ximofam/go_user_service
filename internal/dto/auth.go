@@ -30,3 +30,9 @@ type LogoutInput struct {
 	UserID       uint   `json:"-"`
 	RefreshToken string `json:"refresh_token" binding:"required"`
 }
+
+type ResetPasswordInput struct {
+	Email    string `json:"email" binding:"required,email"`
+	Password string `json:"password" binding:"required"`
+	OTP      string `json:"otp" binding:"required"`
+}

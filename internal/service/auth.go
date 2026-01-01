@@ -3,11 +3,15 @@ package service
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/ximofam/user-service/internal/dto"
 	"github.com/ximofam/user-service/internal/model"
 	"github.com/ximofam/user-service/internal/repository"
 	"github.com/ximofam/user-service/internal/utils"
+	"github.com/ximofam/user-service/internal/worker"
+	"github.com/ximofam/user-service/pkg/cache"
+	"github.com/ximofam/user-service/pkg/mail"
 	"github.com/ximofam/user-service/pkg/token"
 )
 
@@ -17,17 +21,28 @@ type AuthService interface {
 	ChangePassword(ctx context.Context, input *dto.ChangePasswordInput) error
 	RefreshToken(ctx context.Context, input *dto.RefreshTokenInput) (*dto.LoginOutput, error)
 	Logout(ctx context.Context, input *dto.LogoutInput) error
+	RequestForgotPassword(ctx context.Context, email string) error
+	ResetPassword(ctx context.Context, input *dto.ResetPasswordInput) error
 }
 
 type authService struct {
 	userRepo     repository.UserRepository
 	tokenService token.TokenService
+	cacheService cache.CacheService
+	mailService  mail.MailService
 }
 
-func NewAuthService(userRepo repository.UserRepository, tokenService token.TokenService) AuthService {
+func NewAuthService(
+	userRepo repository.UserRepository,
+	tokenService token.TokenService,
+	cacheService cache.CacheService,
+	mailService mail.MailService,
+) AuthService {
 	return &authService{
 		userRepo:     userRepo,
 		tokenService: tokenService,
+		cacheService: cacheService,
+		mailService:  mailService,
 	}
 }
 
@@ -149,4 +164,65 @@ func (s *authService) Logout(ctx context.Context, input *dto.LogoutInput) error 
 	}
 
 	return s.tokenService.RevokeRefreshToken(ctx, refreshToken.Token)
+}
+
+func (s *authService) RequestForgotPassword(ctx context.Context, email string) error {
+	if err := s.userRepo.IsExists(ctx, "email", email); err != nil {
+		return utils.ErrBadRequest("This email does not exists", err)
+	}
+
+	key := fmt.Sprintf("otp:%s:%s", "forgot_pass", email)
+	otp, err := utils.GenerateOTP(6)
+	if err != nil {
+		return utils.ErrInternal("Failed to generate otp", err)
+	}
+
+	if err := s.cacheService.Set(ctx, key, otp, 1*time.Minute); err != nil {
+		return utils.ErrInternal("Failed to generate otp", err)
+	}
+
+	worker.GlobalPool.Submit(func(ctx context.Context) error {
+		mail := mail.Mail{
+			From:     "vienpham177@gmail.com",
+			To:       []string{email},
+			Subject:  "APP send OTP to reset your password",
+			TextBody: fmt.Sprintf("OTP: %s", otp),
+		}
+
+		if err := s.mailService.Send(ctx, &mail); err != nil {
+			return utils.ErrInternal(fmt.Sprintf("Failed to send otp to email: %s", email), err)
+		}
+
+		return nil
+	})
+
+	return nil
+}
+
+func (s *authService) ResetPassword(ctx context.Context, input *dto.ResetPasswordInput) error {
+	key := fmt.Sprintf("otp:%s:%s", "forgot_pass", input.Email)
+	var otp string
+	if err := s.cacheService.Get(ctx, key, &otp); err != nil {
+		return utils.ErrBadRequest("Invalid or expried OTP", nil)
+	}
+
+	if input.OTP != otp {
+		return utils.ErrBadRequest("Invalid OTP", nil)
+	}
+
+	user, err := s.userRepo.GetByEmail(ctx, input.Email)
+	if err != nil {
+		return utils.ErrInternal(fmt.Sprintf("Failed to find user with email: %s", input.Email), err)
+	}
+
+	hashNewPassword := utils.HashPassword(input.Password)
+	if hashNewPassword == "" {
+		return utils.ErrInternal("Failed to hash password", nil)
+	}
+
+	if err := s.userRepo.UpdatePassword(ctx, user.ID, hashNewPassword); err != nil {
+		return utils.ErrInternal("Failed to reset password", err)
+	}
+
+	return nil
 }

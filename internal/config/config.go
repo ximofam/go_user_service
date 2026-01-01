@@ -11,10 +11,11 @@ import (
 )
 
 type Config struct {
-	Server ServerConfig
-	MySQL  MySQLConfig
-	JWT    JWTConfig
-	Redis  RedisConfig
+	Server   ServerConfig
+	MySQL    MySQLConfig
+	JWT      JWTConfig
+	Redis    RedisConfig
+	Mailtrap MailtrapConfig
 }
 
 func Load() *Config {
@@ -44,6 +45,12 @@ func Load() *Config {
 			Password: getEnv("REDIS_PASSWORD", "123456"),
 			DB:       getEnvAsInt("REDIS_DB", 0),
 		},
+		Mailtrap: MailtrapConfig{
+			Host:     getEnv("MAILTRAP_HOST", ""),
+			Port:     getEnvAsInt("MAILTRAP_PORT", 0),
+			Username: getEnv("MAILTRAP_USERNAME", ""),
+			Password: getEnv("MAILTRAP_PASSWORD", ""),
+		},
 	}
 }
 
@@ -70,6 +77,13 @@ type RedisConfig struct {
 	Addr     string
 	Password string
 	DB       int
+}
+
+type MailtrapConfig struct {
+	Host     string
+	Port     int
+	Username string
+	Password string
 }
 
 func getEnvAsDuration(key string, fallback time.Duration) time.Duration {

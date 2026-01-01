@@ -19,6 +19,7 @@ import (
 	"github.com/ximofam/user-service/internal/transport/http/middleware"
 	"github.com/ximofam/user-service/internal/transport/http/routes"
 	"github.com/ximofam/user-service/pkg/cache"
+	"github.com/ximofam/user-service/pkg/mail"
 	"github.com/ximofam/user-service/pkg/token"
 )
 
@@ -37,15 +38,20 @@ func NewApp(cfg *config.Config, db *sql.DB, redisClient *redis.Client) (*App, er
 
 	dbProvider := mydb.NewDBProvider(db)
 	cacheService := cache.NewCacheService(redisClient)
-
 	tokenService := token.NewTokenService(
 		cfg.JWT.AccessTokenTTL,
 		cfg.JWT.RefreshTokenTTL,
 		cfg.JWT.SecretKey,
 		cacheService,
 	)
+	mailService := mail.NewMailtrapSender(
+		cfg.Mailtrap.Host,
+		cfg.Mailtrap.Port,
+		cfg.Mailtrap.Username,
+		cfg.Mailtrap.Password,
+	)
 
-	routes.AuthRoutes(router, dbProvider, tokenService)
+	routes.AuthRoutes(router, dbProvider, tokenService, cacheService, mailService)
 	routes.UserRoutes(router, dbProvider, tokenService)
 
 	return &App{

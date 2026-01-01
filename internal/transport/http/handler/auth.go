@@ -93,3 +93,34 @@ func (h *AuthHandler) Logout(c *gin.Context) {
 
 	response.Message(c, 200, "Logout user successfully")
 }
+
+func (h *AuthHandler) RequestForgetPassword(c *gin.Context) {
+	type Input struct {
+		Email string `json:"email" binding:"required,email"`
+	}
+	input, ok := bindJSON[Input](c)
+	if !ok {
+		return
+	}
+
+	if err := h.authService.RequestForgotPassword(c.Request.Context(), input.Email); err != nil {
+		response.Error(c, err)
+		return
+	}
+
+	response.Message(c, 200, "Check mail to get OTP")
+}
+
+func (h *AuthHandler) ResetPassword(c *gin.Context) {
+	input, ok := bindJSON[dto.ResetPasswordInput](c)
+	if !ok {
+		return
+	}
+
+	if err := h.authService.ResetPassword(c.Request.Context(), &input); err != nil {
+		response.Error(c, err)
+		return
+	}
+
+	response.Message(c, 200, "Reset password successfully")
+}
