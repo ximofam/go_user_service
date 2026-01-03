@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 
+	"github.com/joho/godotenv"
 	"github.com/ximofam/user-service/internal/app"
 	"github.com/ximofam/user-service/internal/config"
 	"github.com/ximofam/user-service/internal/worker"
@@ -10,6 +11,10 @@ import (
 )
 
 func main() {
+	if err := godotenv.Load(); err != nil {
+		log.Println("No .env file found, using system environment variables")
+	}
+
 	cfg := config.Load()
 
 	// Create sql.DB (using mysql)
@@ -33,9 +38,8 @@ func main() {
 		log.Fatal(err)
 	}
 
-	// Init global worker pool
-	worker.InitGlobalPool()
-	defer worker.GlobalPool.Shutdown()
+	worker.Init(3, 3)
+	defer worker.Shutdown()
 
 	app, err := app.NewApp(cfg, dbMySQL, redisClient)
 	if err != nil {

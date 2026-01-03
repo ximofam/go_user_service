@@ -14,12 +14,12 @@ import (
 
 func AuthRoutes(
 	r *gin.Engine,
-	dbProvider *db.DBProvider,
+	database *db.Database,
 	tokenService token.TokenService,
 	cacheService cache.CacheService,
 	mailService mail.MailService,
 ) {
-	userRepo := repository.NewUserRepository(dbProvider)
+	userRepo := repository.NewUserRepository(database)
 	authService := service.NewAuthService(userRepo, tokenService, cacheService, mailService)
 	authHandler := handler.NewAuthHandler(authService)
 	auth := r.Group("/auth")

@@ -2,12 +2,9 @@ package config
 
 import (
 	"fmt"
-	"log"
 	"os"
 	"strconv"
 	"time"
-
-	"github.com/joho/godotenv"
 )
 
 type Config struct {
@@ -19,10 +16,6 @@ type Config struct {
 }
 
 func Load() *Config {
-	if err := godotenv.Load(); err != nil {
-		log.Println("No .env file found, using system environment variables")
-	}
-
 	return &Config{
 		Server: ServerConfig{
 			Addr:   fmt.Sprintf(":%s", getEnv("SERVER_PORT", "8080")),

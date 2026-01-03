@@ -1,30 +1,9 @@
 package utils
 
-import (
-	"context"
-	"database/sql"
+type contextKey string
+
+var (
+	TxKey       contextKey = "tx"
+	UserIDKey   contextKey = "user_id"
+	UserRoleKey contextKey = "user_role"
 )
-
-type txKey struct{}
-
-var activeTxKey = txKey{}
-
-func ContextSetTx(ctx context.Context, tx *sql.Tx) context.Context {
-	return context.WithValue(ctx, activeTxKey, tx)
-}
-
-func ContextGetTx(ctx context.Context) *sql.Tx {
-	tx, ok := ctx.Value(activeTxKey).(*sql.Tx)
-	if !ok {
-		return nil
-	}
-	return tx
-}
-
-type userIDKey struct{}
-
-var UserIDKey = userIDKey{}
-
-type userRoleKey struct{}
-
-var UserRoleKey = userRoleKey{}

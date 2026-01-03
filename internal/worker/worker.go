@@ -1,9 +1,32 @@
 package worker
 
-var GlobalPool Pool
+import (
+	"errors"
+	"sync"
+)
 
-func InitGlobalPool() {
-	GlobalPool = NewPoolV1(3, 3)
+var (
+	instance Pool
+	once     sync.Once
+)
 
-	GlobalPool.Run()
+func Init(concurrency, queueSize int) {
+	once.Do(func() {
+		instance = NewPoolV1(concurrency, queueSize)
+		instance.Run()
+	})
+}
+
+func Submit(job Job) error {
+	if instance == nil {
+		return errors.New("The Worker Pool has not been initialized")
+	}
+
+	return instance.Submit(job)
+}
+
+func Shutdown() {
+	if instance != nil {
+		instance.Shutdown()
+	}
 }

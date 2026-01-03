@@ -24,18 +24,18 @@ type UserRepository interface {
 }
 
 type userRepo struct {
-	*db.DBProvider
+	*db.Database
 }
 
-func NewUserRepository(dbProvider *db.DBProvider) *userRepo {
+func NewUserRepository(database *db.Database) *userRepo {
 	return &userRepo{
-		DBProvider: dbProvider,
+		Database: database,
 	}
 }
 
 func (r *userRepo) Create(ctx context.Context, user *model.User) error {
 	query := "INSERT INTO users (email, username, password) VALUES(?,?,?)"
-	if _, err := r.GetQuerier(ctx).ExecContext(ctx, query, user.Email, user.Username, user.Password); err != nil {
+	if _, err := r.Querier(ctx).ExecContext(ctx, query, user.Email, user.Username, user.Password); err != nil {
 		return err
 	}
 
@@ -45,7 +45,7 @@ func (r *userRepo) Create(ctx context.Context, user *model.User) error {
 func (r *userRepo) GetByID(ctx context.Context, id uint) (*model.User, error) {
 	query := fmt.Sprintf("%s FROM %s WHERE id = ? AND deleted_at IS NULL", scanUserSelectQuery, userTable)
 
-	user, err := scanUser(r.GetQuerier(ctx).QueryRowContext(ctx, query, id))
+	user, err := scanUser(r.Querier(ctx).QueryRowContext(ctx, query, id))
 	if err != nil {
 		return nil, err
 	}
@@ -56,7 +56,7 @@ func (r *userRepo) GetByID(ctx context.Context, id uint) (*model.User, error) {
 func (r *userRepo) GetByEmail(ctx context.Context, email string) (*model.User, error) {
 	query := fmt.Sprintf("%s FROM %s WHERE email = ? AND deleted_at IS NULL", scanUserSelectQuery, userTable)
 
-	user, err := scanUser(r.GetQuerier(ctx).QueryRowContext(ctx, query, email))
+	user, err := scanUser(r.Querier(ctx).QueryRowContext(ctx, query, email))
 	if err != nil {
 		return nil, err
 	}
@@ -66,7 +66,7 @@ func (r *userRepo) GetByEmail(ctx context.Context, email string) (*model.User, e
 
 func (r *userRepo) UpdatePassword(ctx context.Context, userID uint, newPassword string) error {
 	query := fmt.Sprintf("UPDATE %s SET password = ? WHERE id = ?", userTable)
-	res, err := r.GetQuerier(ctx).ExecContext(ctx, query, newPassword, userID)
+	res, err := r.Querier(ctx).ExecContext(ctx, query, newPassword, userID)
 	if err != nil {
 		return err
 	}
@@ -86,7 +86,7 @@ func (r *userRepo) UpdatePassword(ctx context.Context, userID uint, newPassword 
 func (r *userRepo) IsExists(ctx context.Context, field, value string) error {
 	query := fmt.Sprintf("SELECT 1 FROM %s WHERE %s = ? LIMIT 1", userTable, field)
 	count := 0
-	if err := r.GetQuerier(ctx).QueryRowContext(ctx, query, value).Scan(&count); err != nil {
+	if err := r.Querier(ctx).QueryRowContext(ctx, query, value).Scan(&count); err != nil {
 		return err
 	}
 
@@ -114,7 +114,7 @@ func (r *userRepo) GetAll(ctx context.Context, input *dto.ListUsersInput) ([]mod
 	query.WriteString("LIMIT ? OFFSET ? ")
 	args = append(args, input.GetLimit(), input.GetOffset())
 
-	querier := r.GetQuerier(ctx)
+	querier := r.Querier(ctx)
 
 	selectQuery := scanUserSelectQuery + query.String()
 	log.Println(selectQuery)
@@ -155,7 +155,7 @@ func (r *userRepo) GetAll(ctx context.Context, input *dto.ListUsersInput) ([]mod
 
 func (r *userRepo) SoftDelete(ctx context.Context, id uint) error {
 	query := fmt.Sprintf("UPDATE %s SET deleted_at = NOW() WHERE id = ?", userTable)
-	res, err := r.GetQuerier(ctx).ExecContext(ctx, query, id)
+	res, err := r.Querier(ctx).ExecContext(ctx, query, id)
 	if err != nil {
 		return err
 	}

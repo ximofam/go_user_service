@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"fmt"
+	"log"
 	"time"
 
 	"github.com/ximofam/user-service/internal/dto"
@@ -181,7 +182,7 @@ func (s *authService) RequestForgotPassword(ctx context.Context, email string) e
 		return utils.ErrInternal("Failed to generate otp", err)
 	}
 
-	worker.GlobalPool.Submit(func(ctx context.Context) error {
+	job := func(ctx context.Context) error {
 		mail := mail.Mail{
 			From:     "vienpham177@gmail.com",
 			To:       []string{email},
@@ -194,7 +195,12 @@ func (s *authService) RequestForgotPassword(ctx context.Context, email string) e
 		}
 
 		return nil
-	})
+	}
+
+	if err := worker.Submit(job); err != nil {
+		log.Printf("Failed to add job to worker: %v", err)
+		return job(context.Background())
+	}
 
 	return nil
 }

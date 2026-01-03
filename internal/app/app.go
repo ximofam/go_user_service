@@ -32,11 +32,15 @@ type App struct {
 
 func NewApp(cfg *config.Config, db *sql.DB, redisClient *redis.Client) (*App, error) {
 	router := gin.Default()
+
+	limiter := middleware.NewIPRateLimiter(20, 10, 1*time.Minute)
+
 	router.Use(
 		middleware.APIKeyAuth(cfg.Server.APIKey),
+		middleware.RateLimiterMiddleware(limiter),
 	)
 
-	dbProvider := mydb.NewDBProvider(db)
+	database := mydb.NewDatabase(db)
 	cacheService := cache.NewCacheService(redisClient)
 	tokenService := token.NewTokenService(
 		cfg.JWT.AccessTokenTTL,
@@ -51,8 +55,8 @@ func NewApp(cfg *config.Config, db *sql.DB, redisClient *redis.Client) (*App, er
 		cfg.Mailtrap.Password,
 	)
 
-	routes.AuthRoutes(router, dbProvider, tokenService, cacheService, mailService)
-	routes.UserRoutes(router, dbProvider, tokenService)
+	routes.AuthRoutes(router, database, tokenService, cacheService, mailService)
+	routes.UserRoutes(router, database, tokenService)
 
 	return &App{
 		cfg:         cfg,

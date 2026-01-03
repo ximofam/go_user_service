@@ -11,8 +11,8 @@ import (
 	"github.com/ximofam/user-service/pkg/token"
 )
 
-func UserRoutes(r *gin.Engine, dbProvider *db.DBProvider, tokenService token.TokenService) {
-	userRepo := repository.NewUserRepository(dbProvider)
+func UserRoutes(r *gin.Engine, database *db.Database, tokenService token.TokenService) {
+	userRepo := repository.NewUserRepository(database)
 	userService := service.NewUserService(userRepo)
 	userHandler := handler.NewUserHandler(userService)
 	user := r.Group("/api/v1/users", middleware.Auth(tokenService))
